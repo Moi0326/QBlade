@@ -19,121 +19,18 @@ import numpy as np
 from matplotlib import rcParams
 import os
 import sys
+from QBlade_processing import QBlade
 
 rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['Hiragino Sans', 'BIZ UDGothic', 'Yu Gothic', 'Meiryo', 'Noto Sans CJK JP',
                                'IPAexGothic', 'DejaVu Sans']
 
 
-class QBlade:
-
-    def __init__(self, save_figure, show_neg, only_mean, path_input, path_output):
-        """
-        :param save_figure: 1 → save, 0 → no save
-        :param show_neg: 1 → 負の軸を表示する, 0 → 負の軸を表示しない
-        :param only_mean: 1 → 平均値のみ表示, 0 → 平均値と生データを表示, -1 → 生データのみ表示
-        :param path_input: plotするcsvの絶対パス
-        :param path_output: output先の絶対パス
-        """
-        self.path_input = path_input
-        self.path_output = path_output
-        self.savefig = save_figure
-        self.only_mean = only_mean
-        self.show_negative = show_neg
-        self.csv = pd.read_csv(filepath_or_buffer=path_input,
-                               sep=",",
-                               index_col=None,
-                               header=None,
-                               skiprows=[0, 1, 2],
-                               engine="python").iloc[:, :-1]
-
-    def initialize(self):
-        idx = pd.IndexSlice
-        # CSV読み込み
-        csv = pd.read_csv(filepath_or_buffer=self.path_input,
-                          sep=",",
-                          index_col=None,
-                          header=None,
-                          skiprows=[0, 1, 2],
-                          engine="python").iloc[:, :-1]
-
-        # ヘッダー読み込み
-        headers = [p for p in pd.read_csv(filepath_or_buffer=self.path_input,
-                                          sep=",",
-                                          index_col=None,
-                                          skiprows=[0],
-                                          engine="python").columns][:-1]
-        headers[1::2] = headers[::2]
-        # print(csv, csv.columns)
-        sub_columns = ['Degree', 'Momentary_Torque'] * (int(len(headers) / 2))
-
-        column_arrays = [
-            headers,
-            sub_columns
-        ]
-        tuple_1 = list(zip(*column_arrays))
-
-        index = pd.MultiIndex.from_tuples(tuple_1, names=['Title', 'Axis'])
-        # print(index)
-        csv.columns = index
-        # print(csv.loc[:, idx[:,'Time[s]']])
-        return csv
-
-    def define_header(self):
-        h = [p for p in pd.read_csv(filepath_or_buffer=self.path_input,
-                                    sep=",",
-                                    index_col=None,
-                                    skiprows=[0],
-                                    engine="python").columns]
-        return h[0:-1:2]
-
-    def mean_plot(self, deg, r):
-        """
-        :param deg:角度
-        :param r: 値
-        :return: 角度,平均値　のlist
-        """
-        """
-        平均値計算
-        """
-        deg = deg.dropna(how='any')
-        r = r.dropna(how='any')
-
-        deg = deg.values.tolist()
-        # 変位角取得
-        delta_deg = round(deg[1] - deg[0])
-        # Revolution数取得
-        loop_1 = int(360 / delta_deg)
-        # print(loop_1)
-
-        """
-        新規Array作成
-        """
-        # csvデータ整形
-        # print(type(r))
-
-        value = [np.array(r.iloc[i::loop_1].values.tolist()[0:int(len(r) / loop_1)]) for i in range(loop_1)]
-        array1 = value[0]
-        for i in range(loop_1 - 1):
-            array1 = np.vstack([array1, value[i + 1]])
-
-        # DataFrame作成
-        df = pd.DataFrame(array1)
-        df.loc[loop_1] = df.iloc[0]
-        # deg = pd.DataFrame(deg.T)
-        x = [deg[0:loop_1 + 1], df.median(axis='columns')]
-        print("mean: " + str(sum(df.mean(axis='columns')) / loop_1))
-        d_mean.set(sum(df.mean(axis='columns')) / loop_1)
-        d_min.set(min(df.mean(axis='columns')))
-        d_max.set(max(df.mean(axis='columns')))
-        return x
-
-
 def Quit(*event):
     root.quit()
     root.destroy()
     sys.exit(0)
-    plt.close()
+    # plt.close()
 
 
 def open_file(*event):
@@ -164,9 +61,12 @@ def DrawCanvas(canvas, canvas2, ax, ax_2, colors="gray"):
         # ax.set_title(label1)
 
         csv = qb.initialize()
-        x = qb.mean_plot(csv.loc[:, pd.IndexSlice[file2.get(), 'Degree']],
-                         csv.loc[:,
-                         pd.IndexSlice[file2.get(), 'Momentary_Torque']])
+        x, _d_mean, _d_min, _d_max = qb.mean_plot(csv.loc[:, pd.IndexSlice[file2.get(), 'Degree']],
+                                                  csv.loc[:,
+                                                  pd.IndexSlice[file2.get(), 'Momentary_Torque']])
+        d_max.set(_d_max)
+        d_min.set(_d_min)
+        d_mean.set(_d_mean)
         ax.plot(np.deg2rad(x[0]), x[1])
         ax_2.plot(x[0], x[1])
         x_min = xmin.get()
@@ -180,7 +80,17 @@ def DrawCanvas(canvas, canvas2, ax, ax_2, colors="gray"):
         ax_2.set_xticks(np.arange(0, x_max + 1, 30))
         # fig2.gca().xaxis.set_minor_locator(tick.MultipleLocator(30))
         # fig2.gca().yaxis.set_minor_locator(tick.MultipleLocator(50))
-        ax_2.grid(which='minor')
+
+        if enableGrid.get():
+            major_ticks = np.arange(x_min, x_max + 1, grid_interval_x.get())
+            ax_2.set_xticks(major_ticks)
+            major_ticks = np.arange(y_min, y_max + 1, grid_interval_y.get())
+            ax_2.set_yticks(major_ticks)
+            ax_2.grid(which='major')
+        else:
+
+            ax_2.grid(False)
+
         # ax.legend(framealpha=1)
 
         canvas.draw()  # キャンバスの描画
@@ -264,6 +174,68 @@ def save(*event):
         status_var.set("Error occurred")
 
 
+def graph_setting(*event):
+    SettingWindow = None
+    try:
+        def enable_grid_show(*event):
+            partial(DrawCanvas, Canvas, Canvas2, ax1, ax2)()
+            print("{} Grid".format("enable" if enableGrid.get() else "disable"))
+
+        def apply_grid_interval_x(*event):
+            _grid_interval_x = grid_interval_entry_x.get()
+            grid_interval_x.set(_grid_interval_x)
+            partial(DrawCanvas, Canvas, Canvas2, ax1, ax2)()
+            print("Grid interval set to {}".format(_grid_interval_x))
+
+        def apply_grid_interval_y(*event):
+            _grid_interval_y = grid_interval_entry_y.get()
+            grid_interval_y.set(_grid_interval_y)
+            partial(DrawCanvas, Canvas, Canvas2, ax1, ax2)()
+            print("Grid interval set to {}".format(_grid_interval_y))
+
+        if SettingWindow is None or not SettingWindow.winfo_exists():
+            SettingWindow = tkinter.Toplevel(root)
+            SettingWindow.title(u"直交座標系の設定")
+            SettingWindow.minsize(300, 150)
+            SettingWindow.rowconfigure(0, weight=1)
+            SettingWindow.columnconfigure(0, weight=1)
+            SettingWindow.grid()
+
+            frame_setting = ttk.Frame(SettingWindow)
+            frame_setting.rowconfigure(0, weight=1)
+            frame_setting.columnconfigure(0, weight=1)
+            frame_setting.grid(sticky=(tkinter.N, tkinter.E, tkinter.S, tkinter.W))
+
+            grid_enable_ax = ttk.Checkbutton(frame_setting, text="グリッドを有効にする", var=enableGrid, command=enable_grid_show)
+            grid_enable_ax.grid(row=1, column=2, padx=10, pady=10, columnspan=1)
+
+            grid_interval_entry_y = ttk.Entry(frame_setting, width=30, textvariable=grid_interval_y)
+            grid_interval_entry_y.grid(row=2, column=2, padx=10, pady=10, columnspan=1)
+            grid_interval_y_label = ttk.Label(frame_setting, text="y軸グリッド間隔 : ", anchor=tkinter.W)
+            grid_interval_y_label.grid(row=2, column=1, padx=10)
+            grid_interval_y_button = ttk.Button(frame_setting, text="適用", command=apply_grid_interval_y)
+            if file1.get() == "":
+                grid_interval_y_button.state(['disabled'])
+            grid_interval_y_button.grid(row=2, column=3, padx=10)
+
+            grid_interval_entry_x = ttk.Entry(frame_setting, width=30, textvariable=grid_interval_x)
+            grid_interval_entry_x.grid(row=3, column=2, padx=10, pady=10, columnspan=1)
+            grid_interval_x_label = ttk.Label(frame_setting, text="x軸グリッド間隔 : ", anchor=tkinter.W)
+            grid_interval_x_label.grid(row=3, column=1, padx=10)
+            grid_interval_x_button = ttk.Button(frame_setting, text="適用", command=apply_grid_interval_x)
+            if file1.get() == "":
+                grid_interval_x_button.state(['disabled'])
+            grid_interval_x_button.grid(row=3, column=3, padx=10)
+
+
+
+    except:
+        import traceback
+
+        traceback.print_exc()
+        status_var.set("Error occurred")
+
+
 def get_csvlist_selected(*event):
     if len(plot_data_list.curselection()) != 0:
         file2.set(plot_data_list.get(plot_data_list.curselection()[0]))
@@ -327,7 +299,9 @@ if __name__ == "__main__":
         root.config(menu=men)
         # メニューに親メニュー（ファイル）を作成する
         menu_file = tkinter.Menu(root, tearoff=0)
+        menu_setting = tkinter.Menu(root, tearoff=0)
         men.add_cascade(label='ファイル', menu=menu_file)
+        men.add_cascade(label='設定', menu=menu_setting)
 
         # 親メニューに子メニュー（開く・閉じる）を追加する
         menu_file.add_command(label='ファイルを開く', command=refer_file, accelerator='Ctrl+O')
@@ -339,6 +313,14 @@ if __name__ == "__main__":
         menu_file.add_separator()
         menu_file.add_command(label='終了する', command=Quit, accelerator='Ctrl+Q')
         root.bind_all("<Control-q>", Quit)
+
+        enableGrid = tkinter.BooleanVar()
+        enableGrid.set(True)
+        grid_interval_x = tkinter.DoubleVar(value=100)
+        # grid_interval_x.set(120)
+        grid_interval_y = tkinter.DoubleVar(value=100)
+        # grid_interval_y.set(100)
+        menu_setting.add_command(label='グラフ設定', command=graph_setting)
 
         # グラフの設定Q
         fig = plt.figure()
