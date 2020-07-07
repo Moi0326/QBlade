@@ -23,17 +23,17 @@ class Application(tkinter.Frame):
         self.frame_Graph.grid(row=0, column=0, rowspan=10, columnspan=10)
 
         self.data_list = tkinter.Frame(self.master)
-        self.data_list.grid(row=11, column=0, columnspan=10, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
+        self.data_list.grid(row=10, column=0, columnspan=10, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
 
         self.files_list = tkinter.Frame(self.master, height=300, bd=2, relief="ridge")
         self.files_list.grid(row=0, column=11, rowspan=10, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
 
-        self.frame_csv_list = tkinter.Frame(self.files_list)
-        self.frame_csv_list.grid(row=0, column=0, rowspan=5, columnspan=5,
+        self.frame_csv_list = tkinter.Frame(self.files_list, relief="ridge")
+        self.frame_csv_list.grid(row=0, column=0,
                                  sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
 
-        self.frame_plot_data = tkinter.Frame(self.files_list)
-        self.frame_plot_data.grid(row=6, column=0, rowspan=5, columnspan=5,
+        self.frame_plot_data = tkinter.Frame(self.files_list, relief="ridge")
+        self.frame_plot_data.grid(row=5, column=0,
                                   sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
 
         self.config = tkinter.Frame(self.master, width=300, height=300, bd=2)
@@ -94,16 +94,18 @@ class Application(tkinter.Frame):
         self.Label_y_max = ttk.Label(self.frame_lim, text="y最大値")
         self.Label_data_min = ttk.Label(self.frame_data, text="最小値")
         self.Label_data_max = ttk.Label(self.frame_data, text="最大値")
-        self.Label_data_mean = ttk.Label(self.frame_data, text="一周\n平均値")
+        self.Label_data_mean = ttk.Label(self.frame_data, text="一周平均値")
         # Variables for List box
         self.csv_list = tkinter.StringVar(value=[])
         self.listbox_csv_list = tkinter.Listbox(self.frame_csv_list,
                                                 listvariable=self.csv_list,
-                                                height=10, width=60)
+                                                height=12,
+                                                width=60)
         self.plot_data_list = tkinter.StringVar(value=[])
         self.listbox_plot_data_list = tkinter.Listbox(self.frame_plot_data,
                                                       listvariable=self.plot_data_list,
-                                                      height=11, width=60)
+                                                      height=11,
+                                                      width=60)
         # Variables for Button
         self.ReDrawButton = ttk.Button(self.frame_data, text="描画", width=15,
                                        command=partial(self.DrawCanvas,
@@ -192,9 +194,9 @@ class Application(tkinter.Frame):
 
     def create_grid_label(self):
         # ラベルに関する諸々の設定
-        self.Label_selected_data.grid(row=1, column=1)
-        self.Label_working_dir.grid(row=1, column=1)
-        self.Label_selected_csv.grid(row=2, column=1)
+        self.Label_selected_data.grid(row=1, column=1, sticky=tkinter.E)
+        self.Label_working_dir.grid(row=1, column=1, sticky=tkinter.E)
+        self.Label_selected_csv.grid(row=2, column=1, sticky=tkinter.E)
         self.Label_x_min.grid(row=1, column=1, sticky=tkinter.E)
         self.Label_x_max.grid(row=2, column=1, sticky=tkinter.E)
         self.Label_y_min.grid(row=1, column=3, sticky=tkinter.E)
