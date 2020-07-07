@@ -100,7 +100,7 @@ class QBlade:
         df = pd.DataFrame(array1)
         df.loc[loop_1] = df.iloc[0]
         # deg = pd.DataFrame(deg.T)
-        x = [deg[0:loop_1 + 1], df.median(axis='columns')]
+        x = [deg[0:loop_1 + 1], df.mean(axis='columns')]
         print("mean: " + str(sum(df.mean(axis='columns')) / loop_1))
         d_mean = (sum(df.mean(axis='columns')) / loop_1)
         d_min = (min(df.mean(axis='columns')))
