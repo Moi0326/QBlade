@@ -68,15 +68,19 @@ class Application(tkinter.Frame):
         self.plot_data_name = tkinter.StringVar()
         self.Entry_plot_data = ttk.Entry(self.frame_plot_data, textvariable=self.plot_data_name, state="readonly")
         # Variables for statistics
-        self.x_min = tkinter.IntVar()
-        self.x_max = tkinter.IntVar()
+        self.x_min = tkinter.DoubleVar()
+        self.x_max = tkinter.DoubleVar()
         self.x_minimum = ttk.Entry(self.frame_lim, width=30, textvariable=self.x_min)  # テキストボックスの生成
         self.x_maximum = ttk.Entry(self.frame_lim, width=30, textvariable=self.x_max)  # テキストボックスの生成
 
-        self.y_min = tkinter.IntVar()
-        self.y_max = tkinter.IntVar()
+        self.y_min = tkinter.DoubleVar()
+        self.y_max = tkinter.DoubleVar()
         self.y_minimum = ttk.Entry(self.frame_lim, width=30, textvariable=self.y_min)  # テキストボックスの生成
         self.y_maximum = ttk.Entry(self.frame_lim, width=30, textvariable=self.y_max)  # テキストボックスの生成
+        self.y_mag = tkinter.DoubleVar()
+        self.y_magnification = ttk.Entry(self.frame_lim, width=30, textvariable=self.y_mag)  # テキストボックスの生成
+        self.y_move = tkinter.DoubleVar()
+        self.y_movement = ttk.Entry(self.frame_lim, width=30, textvariable=self.y_move)  # テキストボックスの生成
 
         self.d_min = tkinter.IntVar()
         self.d_max = tkinter.IntVar()
@@ -92,6 +96,8 @@ class Application(tkinter.Frame):
         self.Label_x_max = ttk.Label(self.frame_lim, text="x最大値")
         self.Label_y_min = ttk.Label(self.frame_lim, text="y最小値")
         self.Label_y_max = ttk.Label(self.frame_lim, text="y最大値")
+        self.Label_magnification = ttk.Label(self.frame_lim, text="倍率")
+        self.Label_y_move = ttk.Label(self.frame_lim, text="y方向移動")
         self.Label_data_min = ttk.Label(self.frame_data, text="最小値")
         self.Label_data_max = ttk.Label(self.frame_data, text="最大値")
         self.Label_data_mean = ttk.Label(self.frame_data, text="一周平均値")
@@ -185,8 +191,12 @@ class Application(tkinter.Frame):
 
         self.y_min.set(0)
         self.y_max.set(500)
-        self.y_minimum.grid(row=1, column=4, padx=10, pady=10)
-        self.y_maximum.grid(row=2, column=4, padx=10, pady=10)
+        self.y_mag.set(1)
+        self.y_move.set(0)
+        self.y_minimum.grid(row=1, column=4, padx=10, pady=4)
+        self.y_maximum.grid(row=2, column=4, padx=10, pady=4)
+        self.y_magnification.grid(row=3, column=4, padx=10, pady=2)
+        self.y_movement.grid(row=4, column=4, padx=10, pady=2)
 
         self.data_minimum.grid(row=1, column=2, padx=10, pady=10, columnspan=2)
         self.data_maximum.grid(row=2, column=2, padx=10, pady=10, columnspan=2)
@@ -201,6 +211,8 @@ class Application(tkinter.Frame):
         self.Label_x_max.grid(row=2, column=1, sticky=tkinter.E)
         self.Label_y_min.grid(row=1, column=3, sticky=tkinter.E)
         self.Label_y_max.grid(row=2, column=3, sticky=tkinter.E)
+        self.Label_magnification.grid(row=3, column=3, sticky=tkinter.E)
+        self.Label_y_move.grid(row=4, column=3, sticky=tkinter.E)
         self.Label_data_min.grid(row=1, column=1, sticky=tkinter.E)
         self.Label_data_max.grid(row=2, column=1, sticky=tkinter.E)
         self.Label_data_mean.grid(row=3, column=1, sticky=tkinter.E)
@@ -268,9 +280,9 @@ class Application(tkinter.Frame):
             self.d_max.set(_d_max)
             self.d_min.set(_d_min)
             self.d_mean.set(_d_mean)
-            ax.plot(np.deg2rad(list(x.index)), x['mean'])
+            ax.plot(np.deg2rad(list(x.index)), x['mean']*self.y_mag.get()+self.y_move.get())
             # ax.plot(np.deg2rad(list(x.index)), x['median'])
-            ax_2.plot(x.index, x['mean'])
+            ax_2.plot(x.index, x['mean']*self.y_mag.get()+self.y_move.get())
             # ax_2.plot(x.index, x['median'])
             x_min = self.x_min.get()
             x_max = self.x_max.get()
@@ -282,9 +294,9 @@ class Application(tkinter.Frame):
             ax_2.set_xticks(np.arange(0, x_max + 1, 30))
 
             if self.enableGrid.get():
-                major_ticks = np.arange(x_min, x_max + 1, self.grid_interval_x.get())
+                major_ticks = np.arange(x_min, x_max + self.grid_interval_x.get(), self.grid_interval_x.get())
                 ax_2.set_xticks(major_ticks)
-                major_ticks = np.arange(y_min, y_max + 1, self.grid_interval_y.get())
+                major_ticks = np.arange(y_min, y_max + self.grid_interval_y.get(), self.grid_interval_y.get())
                 ax_2.set_yticks(major_ticks)
                 ax_2.grid(which='major')
             else:
