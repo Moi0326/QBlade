@@ -51,8 +51,8 @@ class Application(tkinter.Frame):
         self.fig2 = plt.figure()
         self.ax2 = self.fig2.add_subplot(111)
         # Variables for Menu
-        self.grid_interval_x = tkinter.DoubleVar(value=100)
-        self.grid_interval_y = tkinter.DoubleVar(value=100)
+        self.grid_interval_x = tkinter.DoubleVar(value=30)
+        self.grid_interval_y = tkinter.DoubleVar(value=1000)
         self.enableGrid = tkinter.BooleanVar()
         # Variables for Tab and Canvas
         self.nb = ttk.Notebook(self.frame_Graph)
@@ -268,8 +268,10 @@ class Application(tkinter.Frame):
             self.d_max.set(_d_max)
             self.d_min.set(_d_min)
             self.d_mean.set(_d_mean)
-            ax.plot(np.deg2rad(x[0]), x[1])
-            ax_2.plot(x[0][:], x[1][:])
+            ax.plot(np.deg2rad(list(x.index)), x['mean'])
+            # ax.plot(np.deg2rad(list(x.index)), x['median'])
+            ax_2.plot(x.index, x['mean'])
+            # ax_2.plot(x.index, x['median'])
             x_min = self.x_min.get()
             x_max = self.x_max.get()
             y_min = self.y_min.get()
