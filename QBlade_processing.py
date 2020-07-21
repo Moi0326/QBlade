@@ -14,6 +14,8 @@ class QBlade:
         :param path_input: plotするcsvの絶対パス
         :param path_output: output先の絶対パス
         """
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
         self.path_input = path_input
         self.path_output = path_output
         self.savefig = save_figure
@@ -103,6 +105,7 @@ class QBlade:
         # df.loc[loop_1] = df.iloc[0]
 
         degrees = pd.Series(deg[0:loop_1])
+        df_output = pd.DataFrame(array1, index=degrees)
         # print(degrees)
         df_h = pd.DataFrame(index=degrees)
         df_mean = df.mean(axis='columns').tolist()
@@ -121,7 +124,7 @@ class QBlade:
             df_h = pd.concat([addition, df_h])
         # zero.reset_index(inplace=True, drop=True)
         # df_h.sort_index(inplace=True)
-        print(df_h)
+        print(df,df_h)
         # deg = pd.DataFrame(deg.T)
 
         x = [degrees, df_mean, df_median]
@@ -130,4 +133,4 @@ class QBlade:
         d_mean = (sum(df.mean(axis='columns')) / loop_1)
         d_min = (min(df.mean(axis='columns')))
         d_max = (max(df.mean(axis='columns')))
-        return df_h, d_mean, d_min, d_max
+        return df_h, d_mean, d_min, d_max, df_output

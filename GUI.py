@@ -67,6 +67,7 @@ class Application(tkinter.Frame):
         self.Entry_csv_path = ttk.Entry(self.frame_csv_list, textvariable=self.file_name, state="readonly")
         self.plot_data_name = tkinter.StringVar()
         self.Entry_plot_data = ttk.Entry(self.frame_plot_data, textvariable=self.plot_data_name, state="readonly")
+        self.txt_csv = tkinter.StringVar()
         # Variables for statistics
         self.x_min = tkinter.DoubleVar()
         self.x_max = tkinter.DoubleVar()
@@ -120,6 +121,7 @@ class Application(tkinter.Frame):
         self.button_header = ttk.Button(self.frame_plot_data, text="読み込み", command=self.set_header)
         self.button_refer_file = ttk.Button(self.frame_plot_data, text="ファイル選択", command=self.refer_file)
         self.button_refer_dir = ttk.Button(self.frame_csv_list, text="フォルダ選択", command=self.refer_dir)
+        self.button_csv_output = ttk.Button(self.frame_data, text="CSV出力", command=self.csv_output)
         # Variables for Scrollbar
         self.scrollbar_v2 = ttk.Scrollbar(self.frame_csv_list, command=self.listbox_csv_list.yview)
         self.scrollbar_h2 = ttk.Scrollbar(self.frame_csv_list, command=self.listbox_csv_list.xview, orient='h')
@@ -127,6 +129,10 @@ class Application(tkinter.Frame):
         self.scrollbar_h = ttk.Scrollbar(self.frame_plot_data, command=self.listbox_plot_data_list.xview, orient='h')
         self.status_var = tkinter.StringVar()
         self.status = ttk.Label(self.master, textvariable=self.status_var, relief=tkinter.SUNKEN, anchor=tkinter.W)
+
+        self.SettingWindow = None
+        self.CSVWindow = None
+        self.csv_output_ = None
 
         # Create each function
         self.create_menu()
@@ -238,6 +244,7 @@ class Application(tkinter.Frame):
         self.button_header.grid(row=0, column=1, columnspan=10, sticky=(tkinter.W, tkinter.E, tkinter.S))
         self.button_refer_file.grid(row=1, column=10, sticky=tkinter.E)
         self.button_refer_dir.grid(row=1, column=10, sticky=tkinter.E)
+        self.button_csv_output.grid(row=3, column=5, columnspan=2, pady=10)
 
     def create_scrollbar(self):
         self.scrollbar_v2.grid(row=3, column=11, sticky=(tkinter.N, tkinter.S, tkinter.W))
@@ -274,20 +281,23 @@ class Application(tkinter.Frame):
             ax_2.cla()
 
             csv = qb.initialize()
-            x, _d_mean, _d_min, _d_max = qb.mean_plot(csv.loc[:, pd.IndexSlice[self.plot_data_name.get(), 'Degree']],
-                                                      csv.loc[:,
-                                                      pd.IndexSlice[self.plot_data_name.get(), 'Momentary_Torque']])
+            x, _d_mean, _d_min, _d_max, df_out = qb.mean_plot(
+                csv.loc[:, pd.IndexSlice[self.plot_data_name.get(), 'Degree']],
+                csv.loc[:, pd.IndexSlice[self.plot_data_name.get(), 'Momentary_Torque']])
             self.d_max.set(_d_max)
             self.d_min.set(_d_min)
             self.d_mean.set(_d_mean)
-            ax.plot(np.deg2rad(list(x.index)), x['mean']*self.y_mag.get()+self.y_move.get())
-            # ax.plot(np.deg2rad(list(x.index)), x['median'])
-            ax_2.plot(x.index, x['mean']*self.y_mag.get()+self.y_move.get())
-            # ax_2.plot(x.index, x['median'])
+            self.txt_csv.set(df_out)
+            self.csv_output_ = df_out
+            ax.plot(np.deg2rad(list(x.index)), x['mean'] * self.y_mag.get() + self.y_move.get())
+            # ax.plot(np.deg2rad(list(x.index)), x['median']*self.y_mag.get()+self.y_move.get())
+            ax_2.plot(x.index, x['mean'] * self.y_mag.get() + self.y_move.get())
+            # ax_2.plot(x.index, x['median']*self.y_mag.get()+self.y_move.get())
             x_min = self.x_min.get()
             x_max = self.x_max.get()
             y_min = self.y_min.get()
             y_max = self.y_max.get()
+            ax.set_ylim([y_min, y_max])
             ax.set_ylim([y_min, y_max])
             ax_2.set_xlim([x_min, x_max])
             ax_2.set_ylim([y_min, y_max])
@@ -379,7 +389,6 @@ class Application(tkinter.Frame):
             self.status_var.set("Error occurred")
 
     def graph_setting(self):
-        SettingWindow = None
         try:
             def enable_grid_show():
                 partial(self.DrawCanvas, self.Canvas, self.Canvas2, self.ax1, self.ax2)()
@@ -397,15 +406,15 @@ class Application(tkinter.Frame):
                 partial(self.DrawCanvas, self.Canvas, self.Canvas2, self.ax1, self.ax2)()
                 print("Grid interval set to {}".format(_grid_interval_y))
 
-            if SettingWindow is None or not SettingWindow.winfo_exists():
-                SettingWindow = tkinter.Toplevel(self.master)
-                SettingWindow.title(u"直交座標系の設定")
-                SettingWindow.minsize(300, 150)
-                SettingWindow.rowconfigure(0, weight=1)
-                SettingWindow.columnconfigure(0, weight=1)
-                SettingWindow.grid()
+            if self.SettingWindow is None or not self.SettingWindow.winfo_exists():
+                self.SettingWindow = tkinter.Toplevel(self.master)
+                self.SettingWindow.title(u"直交座標系の設定")
+                self.SettingWindow.minsize(300, 150)
+                self.SettingWindow.rowconfigure(0, weight=1)
+                self.SettingWindow.columnconfigure(0, weight=1)
+                self.SettingWindow.grid()
 
-                frame_setting = ttk.Frame(SettingWindow)
+                frame_setting = ttk.Frame(self.SettingWindow)
                 frame_setting.rowconfigure(0, weight=1)
                 frame_setting.columnconfigure(0, weight=1)
                 frame_setting.grid(sticky=(tkinter.N, tkinter.E, tkinter.S, tkinter.W))
@@ -431,6 +440,51 @@ class Application(tkinter.Frame):
                 if self.file_name.get() == "":
                     grid_interval_x_button.state(['disabled'])
                 grid_interval_x_button.grid(row=3, column=3, padx=10)
+            else:
+                self.SettingWindow.attributes('-topmost', True)
+                self.SettingWindow.attributes('-topmost', False)
+
+        except:
+            import traceback
+            traceback.print_exc()
+            self.status_var.set("Error occurred")
+
+    def csv_output(self):
+        try:
+            if self.CSVWindow is None or not self.CSVWindow.winfo_exists():
+                self.CSVWindow = tkinter.Toplevel(self.master)
+                self.CSVWindow.title(u"グラフデータ")
+                self.CSVWindow.minsize(300, 600)
+                self.CSVWindow.rowconfigure(0, weight=1)
+                self.CSVWindow.columnconfigure(0, weight=1)
+                self.CSVWindow.grid()
+
+                frame_csv_output = ttk.Frame(self.CSVWindow)
+                frame_csv_output.rowconfigure(0, weight=1)
+                frame_csv_output.columnconfigure(0, weight=1)
+                frame_csv_output.grid(sticky=(tkinter.N, tkinter.E, tkinter.S, tkinter.W))
+
+                txt_csv_output = tkinter.Text(frame_csv_output)
+                txt_csv_output.insert('1.0', self.txt_csv)
+                txt_csv_output.grid(row=0, column=0, sticky=(tkinter.N, tkinter.E, tkinter.S, tkinter.W))
+
+                # Scrollbar
+                scrollbar = ttk.Scrollbar(
+                    frame_csv_output,
+                    orient=tkinter.VERTICAL,
+                    command=txt_csv_output.yview)
+                txt_csv_output['yscrollcommand'] = scrollbar.set
+                scrollbar.grid(row=0, column=1, sticky=(tkinter.N, tkinter.S))
+
+                # txt_csv_output.insert(data)
+
+
+
+
+
+            else:
+                self.CSVWindow.attributes('-topmost', True)
+                self.CSVWindow.attributes('-topmost', False)
 
         except:
             import traceback
