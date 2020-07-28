@@ -81,7 +81,7 @@ class QBlade:
         r = r.dropna(how='any')
 
         deg = deg.values.tolist()
-        print(deg)
+        # print(deg)
         # 変位角取得
         delta_deg = round(deg[1] - deg[0])
         # Revolution数取得
@@ -108,9 +108,10 @@ class QBlade:
         df_output = pd.DataFrame(array1, index=degrees)
         # print(degrees)
         df_h = pd.DataFrame(index=degrees)
+
         df_mean = df.mean(axis='columns').tolist()
         df_median = df.median(axis='columns').tolist()
-        print(df_mean)
+        # print(df_mean)
         df_h['mean'] = df_mean
         df_h['median'] = df_median
         df_h.sort_index(inplace=True)
@@ -124,7 +125,7 @@ class QBlade:
             df_h = pd.concat([addition, df_h])
         # zero.reset_index(inplace=True, drop=True)
         # df_h.sort_index(inplace=True)
-        print(df,df_h)
+        print(df, df_h)
         # deg = pd.DataFrame(deg.T)
 
         x = [degrees, df_mean, df_median]

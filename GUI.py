@@ -82,6 +82,8 @@ class Application(tkinter.Frame):
         self.y_magnification = ttk.Entry(self.frame_lim, width=30, textvariable=self.y_mag)  # テキストボックスの生成
         self.y_move = tkinter.DoubleVar()
         self.y_movement = ttk.Entry(self.frame_lim, width=30, textvariable=self.y_move)  # テキストボックスの生成
+        self.low_cut = tkinter.IntVar(0)
+        self.entry_low_cut = ttk.Entry(self.frame_lim, width=30, textvariable=self.low_cut)
 
         self.d_min = tkinter.IntVar()
         self.d_max = tkinter.IntVar()
@@ -99,6 +101,7 @@ class Application(tkinter.Frame):
         self.Label_y_max = ttk.Label(self.frame_lim, text="y最大値")
         self.Label_magnification = ttk.Label(self.frame_lim, text="倍率")
         self.Label_y_move = ttk.Label(self.frame_lim, text="y方向移動")
+        self.Label_plot_range = ttk.Label(self.frame_lim, text="Plot cut-out")
         self.Label_data_min = ttk.Label(self.frame_data, text="最小値")
         self.Label_data_max = ttk.Label(self.frame_data, text="最大値")
         self.Label_data_mean = ttk.Label(self.frame_data, text="一周平均値")
@@ -189,11 +192,12 @@ class Application(tkinter.Frame):
         self.Entry_csv_path.grid(row=2, column=2, columnspan=9, sticky=(tkinter.E, tkinter.W))
         self.Entry_plot_data.grid(row=1, column=2, columnspan=8, sticky=(tkinter.E, tkinter.W))
 
-    def create_statistics(self):
+    def create_statistics(self):  # Tips: Entry
         self.x_min.set(0)  # Todo: config作りたい
         self.x_max.set(360)
-        self.x_minimum.grid(row=1, column=2, padx=10, pady=10)
-        self.x_maximum.grid(row=2, column=2, padx=10, pady=10)
+        self.x_minimum.grid(row=1, column=2, padx=10, pady=4)
+        self.x_maximum.grid(row=2, column=2, padx=10, pady=4)
+        self.entry_low_cut.grid(row=3, column=2, padx=10, pady=4)
 
         self.y_min.set(0)
         self.y_max.set(500)
@@ -204,9 +208,9 @@ class Application(tkinter.Frame):
         self.y_magnification.grid(row=3, column=4, padx=10, pady=2)
         self.y_movement.grid(row=4, column=4, padx=10, pady=2)
 
-        self.data_minimum.grid(row=1, column=2, padx=10, pady=10, columnspan=2)
-        self.data_maximum.grid(row=2, column=2, padx=10, pady=10, columnspan=2)
-        self.data_mean.grid(row=3, column=2, padx=10, pady=10, columnspan=2)
+        self.data_minimum.grid(row=1, column=2, padx=10, pady=4, columnspan=2)
+        self.data_maximum.grid(row=2, column=2, padx=10, pady=4, columnspan=2)
+        self.data_mean.grid(row=3, column=2, padx=10, pady=4, columnspan=2)
 
     def create_grid_label(self):
         # ラベルに関する諸々の設定
@@ -215,6 +219,8 @@ class Application(tkinter.Frame):
         self.Label_selected_csv.grid(row=2, column=1, sticky=tkinter.E)
         self.Label_x_min.grid(row=1, column=1, sticky=tkinter.E)
         self.Label_x_max.grid(row=2, column=1, sticky=tkinter.E)
+        self.Label_plot_range.grid(row=3, column=1, sticky=tkinter.E)
+
         self.Label_y_min.grid(row=1, column=3, sticky=tkinter.E)
         self.Label_y_max.grid(row=2, column=3, sticky=tkinter.E)
         self.Label_magnification.grid(row=3, column=3, sticky=tkinter.E)
@@ -240,11 +246,11 @@ class Application(tkinter.Frame):
 
     def create_button(self):
         # ボタンに関する諸々の設定
-        self.ReDrawButton.grid(row=2, column=5, columnspan=2, pady=10)
+        self.ReDrawButton.grid(row=2, column=5, columnspan=2, pady=4)
         self.button_header.grid(row=0, column=1, columnspan=10, sticky=(tkinter.W, tkinter.E, tkinter.S))
         self.button_refer_file.grid(row=1, column=10, sticky=tkinter.E)
         self.button_refer_dir.grid(row=1, column=10, sticky=tkinter.E)
-        self.button_csv_output.grid(row=3, column=5, columnspan=2, pady=10)
+        self.button_csv_output.grid(row=3, column=5, columnspan=2, pady=4)
 
     def create_scrollbar(self):
         self.scrollbar_v2.grid(row=3, column=11, sticky=(tkinter.N, tkinter.S, tkinter.W))
@@ -287,11 +293,26 @@ class Application(tkinter.Frame):
             self.d_max.set(_d_max)
             self.d_min.set(_d_min)
             self.d_mean.set(_d_mean)
-            self.txt_csv.set(df_out)
+            # self.txt_csv.set(df_out)
             self.csv_output_ = df_out
-            ax.plot(np.deg2rad(list(x.index)), x['mean'] * self.y_mag.get() + self.y_move.get())
+
+            _x_mean = df_out.iloc[:, self.low_cut.get():].mean(axis='columns')
+            _x_mean.sort_index(inplace=True)
+            if list(_x_mean.index)[0] == 0:
+                addition = _x_mean.head(1)
+                addition.rename(index=lambda s: 360, inplace=True)
+                _x_mean = pd.concat([_x_mean, addition])
+            else:
+                addition = _x_mean.tail(1)
+                addition.rename(index=lambda s: 0, inplace=True)
+                _x_mean = pd.concat([addition, _x_mean])
+            _x_mean.sort_index(inplace=True)
+            print("#####", _x_mean)
+            descartes_deg = list(_x_mean.index)
+            radian_deg = np.deg2rad(list(_x_mean.index))
+            ax.plot(radian_deg, _x_mean * self.y_mag.get() + self.y_move.get())
             # ax.plot(np.deg2rad(list(x.index)), x['median']*self.y_mag.get()+self.y_move.get())
-            ax_2.plot(x.index, x['mean'] * self.y_mag.get() + self.y_move.get())
+            ax_2.plot(descartes_deg, _x_mean * self.y_mag.get() + self.y_move.get())
             # ax_2.plot(x.index, x['median']*self.y_mag.get()+self.y_move.get())
             x_min = self.x_min.get()
             x_max = self.x_max.get()
@@ -316,6 +337,15 @@ class Application(tkinter.Frame):
             canvas.draw()  # キャンバスの描画
             canvas2.draw()  # キャンバスの描画
             self.status_var.set('"{}" has been drawn'.format(self.plot_data_name.get()))
+            self.txt_csv.set("")
+            print(df_out.columns.values)
+            self.txt_csv.set("deg" + "," + ",".join([str(i) for i in range(self.low_cut.get(),df_out.columns.values[-1]+1)]))
+            # self.txt_csv.set(
+            #     str(descartes_deg[0]) + "," + ",".join(list(map(str, df_out.iloc[0, self.low_cut.get():].tolist()))))
+            for i in range(0, len(descartes_deg) - 1):
+                # print(i)
+                self.txt_csv.set(self.txt_csv.get() + "\n" + str(descartes_deg[i]) + "," +
+                                 ",".join(list(map(str, df_out.iloc[i, self.low_cut.get():].tolist()))))
 
     def button_selected(self, k):
         if k == -1:
@@ -421,10 +451,10 @@ class Application(tkinter.Frame):
 
                 grid_enable_ax = ttk.Checkbutton(frame_setting, text="グリッドを有効にする", var=self.enableGrid,
                                                  command=enable_grid_show)
-                grid_enable_ax.grid(row=1, column=2, padx=10, pady=10, columnspan=1)
+                grid_enable_ax.grid(row=1, column=2, padx=10, pady=4, columnspan=1)
 
                 grid_interval_entry_y = ttk.Entry(frame_setting, width=30, textvariable=self.grid_interval_y)
-                grid_interval_entry_y.grid(row=2, column=2, padx=10, pady=10, columnspan=1)
+                grid_interval_entry_y.grid(row=2, column=2, padx=10, pady=4, columnspan=1)
                 grid_interval_y_label = ttk.Label(frame_setting, text="y軸グリッド間隔 : ", anchor=tkinter.W)
                 grid_interval_y_label.grid(row=2, column=1, padx=10)
                 grid_interval_y_button = ttk.Button(frame_setting, text="適用", command=apply_grid_interval_y)
@@ -433,7 +463,7 @@ class Application(tkinter.Frame):
                 grid_interval_y_button.grid(row=2, column=3, padx=10)
 
                 grid_interval_entry_x = ttk.Entry(frame_setting, width=30, textvariable=self.grid_interval_x)
-                grid_interval_entry_x.grid(row=3, column=2, padx=10, pady=10, columnspan=1)
+                grid_interval_entry_x.grid(row=3, column=2, padx=10, pady=4, columnspan=1)
                 grid_interval_x_label = ttk.Label(frame_setting, text="x軸グリッド間隔 : ", anchor=tkinter.W)
                 grid_interval_x_label.grid(row=3, column=1, padx=10)
                 grid_interval_x_button = ttk.Button(frame_setting, text="適用", command=apply_grid_interval_x)
@@ -464,8 +494,9 @@ class Application(tkinter.Frame):
                 frame_csv_output.columnconfigure(0, weight=1)
                 frame_csv_output.grid(sticky=(tkinter.N, tkinter.E, tkinter.S, tkinter.W))
 
-                txt_csv_output = tkinter.Text(frame_csv_output)
-                txt_csv_output.insert('1.0', self.txt_csv)
+                txt_csv_output = tkinter.Text(frame_csv_output, wrap=tkinter.NONE)
+                txt_csv_output.insert('1.0', self.txt_csv.get())
+                # txt_csv_output.insert('1.0', "test")
                 txt_csv_output.grid(row=0, column=0, sticky=(tkinter.N, tkinter.E, tkinter.S, tkinter.W))
 
                 # Scrollbar
@@ -473,8 +504,12 @@ class Application(tkinter.Frame):
                     frame_csv_output,
                     orient=tkinter.VERTICAL,
                     command=txt_csv_output.yview)
-                txt_csv_output['yscrollcommand'] = scrollbar.set
+
+                scrollbar_2 = ttk.Scrollbar(frame_csv_output, command=txt_csv_output.xview, orient='h')
                 scrollbar.grid(row=0, column=1, sticky=(tkinter.N, tkinter.S))
+                scrollbar_2.grid(row=1, column=0, sticky=(tkinter.E, tkinter.W))
+                txt_csv_output['xscrollcommand'] = scrollbar_2.set
+                txt_csv_output['yscrollcommand'] = scrollbar.set
 
                 # txt_csv_output.insert(data)
 
