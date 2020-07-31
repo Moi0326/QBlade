@@ -30,4 +30,5 @@ if __name__ == "__main__":
 
         traceback.print_exc()
     finally:
+
         input(">>")  # エラー吐き出したときの表示待ち

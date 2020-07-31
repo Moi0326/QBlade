@@ -9,6 +9,7 @@ import numpy as np
 import os
 import sys
 from QBlade_processing import QBlade
+from config import ConfigInit
 
 
 class Application(tkinter.Frame):
@@ -147,8 +148,10 @@ class Application(tkinter.Frame):
         self.create_list_box()
         self.create_button()
         self.create_scrollbar()
+        self.read_config()
 
     def create_menu(self):
+        # メニューの生成
         # メニューの生成
         menu = tkinter.Menu(self.master)
         self.master.config(menu=menu)
@@ -267,6 +270,7 @@ class Application(tkinter.Frame):
         self.status.grid(row=20, column=0, columnspan=20, sticky=(tkinter.W, tkinter.E, tkinter.S))
 
     def Quit(self, *event):
+        self.save_config()
         self.master.quit()
         self.master.destroy()
         sys.exit(0)
@@ -492,8 +496,8 @@ class Application(tkinter.Frame):
 
                 def save_to_csv(*event):
                     idir_ = self.Entry_select_directory.get()
-                    fld = tkinter.filedialog.asksaveasfilename(filetypes=[("csv Files",".csv")],
-                                                               initialdir=idir_, initialfile=ini_name+'.csv')
+                    fld = tkinter.filedialog.asksaveasfilename(filetypes=[("csv Files", ".csv")],
+                                                               initialdir=idir_, initialfile=ini_name + '.csv')
                     if fld == '':
                         return
                     p = Path(fld)
@@ -566,3 +570,37 @@ class Application(tkinter.Frame):
             self.file_name.set(os.path.basename(self.listbox_csv_list.get(self.listbox_csv_list.curselection()[0])))
             self.set_header()
             return
+
+    def read_config(self):
+        config = ConfigInit()
+        self.dir_path.set(config.w_dir)
+        self.x_min.set(config.x_min_c)
+        self.x_max.set(config.x_max_c)
+        self.y_min.set(config.y_min_c)
+        self.y_max.set(config.y_max_c)
+        self.low_cut.set(config.p_cutout_c)
+        self.grid_interval_x.set(config.grid_x_c)
+        self.grid_interval_y.set(config.grid_y_c)
+
+        fld = self.dir_path.get()
+        p = Path(fld)
+        self.listbox_csv_list.delete(0, tkinter.END)
+        for file in list(p.glob("*.csv")):
+            self.listbox_csv_list.insert('end', file)
+        print(os.path.basename(list(p.glob("*.csv"))[0]))
+
+    def save_config(self):
+        import configparser
+        config = configparser.ConfigParser()
+        # config.read('./config.ini')
+        config['CSVs'] = {'Working Directory': self.dir_path.get()}
+        config['GraphSetting']={ 'x min': self.x_min.get(),
+                                 'x max': self.x_max.get(),
+                                 'y min': self.y_min.get(),
+                                 'y max': self.y_max.get(),
+                                 'Plot cut-out': self.low_cut.get(),
+                                 'Grid x': self.grid_interval_x.get(),
+                                 'Grid y': self.grid_interval_y.get()}
+
+        with open('./config.ini', 'w') as f:
+            config.write(f)
