@@ -339,7 +339,8 @@ class Application(tkinter.Frame):
             self.status_var.set('"{}" has been drawn'.format(self.plot_data_name.get()))
             self.txt_csv.set("")
             print(df_out.columns.values)
-            self.txt_csv.set("deg" + "," + ",".join([str(i) for i in range(self.low_cut.get(),df_out.columns.values[-1]+1)]))
+            self.txt_csv.set(
+                "deg" + "," + ",".join([str(i) for i in range(self.low_cut.get(), df_out.columns.values[-1] + 1)]))
             # self.txt_csv.set(
             #     str(descartes_deg[0]) + "," + ",".join(list(map(str, df_out.iloc[0, self.low_cut.get():].tolist()))))
             for i in range(0, len(descartes_deg) - 1):
@@ -414,7 +415,6 @@ class Application(tkinter.Frame):
             self.status_var.set("Save done.")
         except:
             import traceback
-
             traceback.print_exc()
             self.status_var.set("Error occurred")
 
@@ -488,11 +488,26 @@ class Application(tkinter.Frame):
                 self.CSVWindow.rowconfigure(0, weight=1)
                 self.CSVWindow.columnconfigure(0, weight=1)
                 self.CSVWindow.grid()
+                ini_name = self.Entry_plot_data.get()
+
+                def save_to_csv(*event):
+                    idir_ = self.Entry_select_directory.get()
+                    fld = tkinter.filedialog.asksaveasfilename(filetypes=[("csv Files",".csv")],
+                                                               initialdir=idir_, initialfile=ini_name+'.csv')
+                    if fld == '':
+                        return
+                    p = Path(fld)
+                    print(p)
+                    with open(p, mode="w") as f:
+                        f.write(self.txt_csv.get())
 
                 frame_csv_output = ttk.Frame(self.CSVWindow)
                 frame_csv_output.rowconfigure(0, weight=1)
                 frame_csv_output.columnconfigure(0, weight=1)
                 frame_csv_output.grid(sticky=(tkinter.N, tkinter.E, tkinter.S, tkinter.W))
+
+                button_csv_output_save = ttk.Button(frame_csv_output, text="CSV保存", command=save_to_csv)
+                button_csv_output_save.grid(row=2, column=0, sticky=(tkinter.N, tkinter.E, tkinter.S, tkinter.W))
 
                 txt_csv_output = tkinter.Text(frame_csv_output, wrap=tkinter.NONE)
                 txt_csv_output.insert('1.0', self.txt_csv.get())
@@ -520,6 +535,15 @@ class Application(tkinter.Frame):
             else:
                 self.CSVWindow.attributes('-topmost', True)
                 self.CSVWindow.attributes('-topmost', False)
+
+        except:
+            import traceback
+            traceback.print_exc()
+            self.status_var.set("Error occurred")
+
+    def csv_output_save(self):
+        try:
+            pass
 
         except:
             import traceback
