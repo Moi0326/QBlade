@@ -348,20 +348,21 @@ class Application(tkinter.Frame):
             # self.txt_csv.set(
             #     str(descartes_deg[0]) + "," + ",".join(list(map(str, df_out.iloc[0, self.low_cut.get():].tolist()))))
             csv_listed = []
+            print(_x_mean.tolist())
             for i in range(0, len(descartes_deg) - 1):
                 # print(i)
                 csv_listed.append(
                     [(int((descartes_deg[i] + 270) % 360)),
-                     ",".join(list(map(str, df_out.iloc[i, self.low_cut.get():].tolist())))]
+                     ",".join(list(map(str, df_out.iloc[i, self.low_cut.get():].tolist()))),
+                     str(np.average(df_out.iloc[i, self.low_cut.get():].tolist()))]
                 )
                 if int((descartes_deg[i] + 270) % 360) == 355:
                     csv_listed.append([360,
-                                       ",".join(list(map(str, df_out.iloc[18, # 18 is index of "0 degree"
-                                                              self.low_cut.get():].tolist())))])
+                                       ",".join(list(map(str, df_out.iloc[18,  # 18 is index of "0 degree"
+                                                              self.low_cut.get():].tolist()))), str(_x_mean.tolist()[0])])
             csv_listed = sorted(csv_listed, key=lambda s: s[0])
             for i in range(0, len(descartes_deg)):
                 csv_listed[i][0] = str(csv_listed[i][0])
-            print(csv_listed)
             for i in range(0, len(descartes_deg)):
                 self.txt_csv.set(self.txt_csv.get() + "\n" + ",".join(csv_listed[i]))
 
