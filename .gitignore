@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 .idea/misc.xml
 .idea/QBlade.iml
+.idea/misc.xml
+.idea/QBlade.iml
+config.ini

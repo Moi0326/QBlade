@@ -347,10 +347,30 @@ class Application(tkinter.Frame):
                 "deg" + "," + ",".join([str(i) for i in range(self.low_cut.get(), df_out.columns.values[-1] + 1)]))
             # self.txt_csv.set(
             #     str(descartes_deg[0]) + "," + ",".join(list(map(str, df_out.iloc[0, self.low_cut.get():].tolist()))))
+            csv_listed = []
             for i in range(0, len(descartes_deg) - 1):
                 # print(i)
-                self.txt_csv.set(self.txt_csv.get() + "\n" + str(descartes_deg[i]) + "," +
-                                 ",".join(list(map(str, df_out.iloc[i, self.low_cut.get():].tolist()))))
+                csv_listed.append(
+                    [(int((descartes_deg[i] + 270) % 360)),
+                     ",".join(list(map(str, df_out.iloc[i, self.low_cut.get():].tolist())))]
+                )
+                if int((descartes_deg[i] + 270) % 360) == 355:
+                    csv_listed.append([360,
+                                       ",".join(list(map(str, df_out.iloc[18, # 18 is index of "0 degree"
+                                                              self.low_cut.get():].tolist())))])
+            csv_listed = sorted(csv_listed, key=lambda s: s[0])
+            for i in range(0, len(descartes_deg)):
+                csv_listed[i][0] = str(csv_listed[i][0])
+            print(csv_listed)
+            for i in range(0, len(descartes_deg)):
+                self.txt_csv.set(self.txt_csv.get() + "\n" + ",".join(csv_listed[i]))
+
+            # for i in range(0, len(descartes_deg) - 1):
+            #                 # print(i)
+            #                 self.txt_csv.set(self.txt_csv.get() + "\n" +
+            #                                  str(int((descartes_deg[i] + 270) % 360)) + "," +
+            #                                  ",".join(list(map(str, df_out.iloc[i, self.low_cut.get():].tolist()))))
+            #
 
     def button_selected(self, k):
         if k == -1:
@@ -594,13 +614,13 @@ class Application(tkinter.Frame):
         config = configparser.ConfigParser()
         # config.read('./config.ini')
         config['CSVs'] = {'Working Directory': self.dir_path.get()}
-        config['GraphSetting']={ 'x min': self.x_min.get(),
-                                 'x max': self.x_max.get(),
-                                 'y min': self.y_min.get(),
-                                 'y max': self.y_max.get(),
-                                 'Plot cut-out': self.low_cut.get(),
-                                 'Grid x': self.grid_interval_x.get(),
-                                 'Grid y': self.grid_interval_y.get()}
+        config['GraphSetting'] = {'x min': self.x_min.get(),
+                                  'x max': self.x_max.get(),
+                                  'y min': self.y_min.get(),
+                                  'y max': self.y_max.get(),
+                                  'Plot cut-out': self.low_cut.get(),
+                                  'Grid x': self.grid_interval_x.get(),
+                                  'Grid y': self.grid_interval_y.get()}
 
         with open('./config.ini', 'w') as f:
             config.write(f)
