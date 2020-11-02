@@ -45,6 +45,42 @@ class Application(tkinter.Frame):
 
         self.frame_data = tkinter.Frame(self.master, bd=2, relief="ridge")
         self.frame_data.grid(row=11, column=11)
+
+        '''
+        CheckButton
+        '''
+        self.ALL_A = tkinter.StringVar()
+        self.ALL_N = tkinter.StringVar()
+        self.ALL_T = tkinter.StringVar()
+        self.MST_A = tkinter.StringVar()
+        self.MST_N = tkinter.StringVar()
+        self.MST_T = tkinter.StringVar()
+        self.DMST_A = tkinter.StringVar()
+        self.DMST_N = tkinter.StringVar()
+        self.DMST_T = tkinter.StringVar()
+        self.AC_A = tkinter.StringVar()
+        self.AC_N = tkinter.StringVar()
+        self.AC_T = tkinter.StringVar()
+        self.U2DiVA_A = tkinter.StringVar()
+        self.U2DiVA_N = tkinter.StringVar()
+        self.U2DiVA_T = tkinter.StringVar()
+        self.Cactus_A = tkinter.StringVar()
+        self.Cactus_N = tkinter.StringVar()
+        self.Cactus_T = tkinter.StringVar()
+        self.ARDEMA2D_A = tkinter.StringVar()
+        self.ARDEMA2D_N = tkinter.StringVar()
+        self.ARDEMA2D_T = tkinter.StringVar()
+        self.AoA_list = [self.MST_A, self.DMST_A, self.AC_A, self.U2DiVA_A, self.Cactus_A, self.ARDEMA2D_A]
+        self.Norm_list = [self.MST_N, self.DMST_N, self.AC_N, self.U2DiVA_N, self.Cactus_N, self.ARDEMA2D_N]
+        self.Tan_list = [self.MST_T, self.DMST_T, self.AC_T, self.U2DiVA_T, self.Cactus_T, self.ARDEMA2D_T]
+
+        self.ALL_A.set('0'), self.ALL_N.set('0'), self.ALL_T.set('0')
+        self.MST_A.set('0'), self.MST_N.set('0'), self.MST_T.set('0')
+        self.DMST_A.set('0'), self.DMST_N.set('0'), self.DMST_T.set('0')
+        self.AC_A.set('0'), self.AC_N.set('0'), self.AC_T.set('0')
+        self.U2DiVA_A.set('0'), self.U2DiVA_N.set('0'), self.U2DiVA_T.set('0')
+        self.Cactus_A.set('0'), self.Cactus_N.set('0'), self.Cactus_T.set('0')
+        self.ARDEMA2D_A.set('0'), self.ARDEMA2D_N.set('0'), self.ARDEMA2D_T.set('0')
         # Variables for Graph
         self.fig = plt.figure()
         self.ax1 = self.fig.add_subplot(111, projection='polar')
@@ -126,6 +162,7 @@ class Application(tkinter.Frame):
         self.button_refer_file = ttk.Button(self.frame_plot_data, text="ファイル選択", command=self.refer_file)
         self.button_refer_dir = ttk.Button(self.frame_csv_list, text="フォルダ選択", command=self.refer_dir)
         self.button_csv_output = ttk.Button(self.frame_data, text="CSV出力", command=self.csv_output)
+        self.button_what_to_plot = ttk.Button(self.frame_data, text="Plotデータ選択", command=self.select_what_to_plot)
         # Variables for Scrollbar
         self.scrollbar_v2 = ttk.Scrollbar(self.frame_csv_list, command=self.listbox_csv_list.yview)
         self.scrollbar_h2 = ttk.Scrollbar(self.frame_csv_list, command=self.listbox_csv_list.xview, orient='h')
@@ -136,6 +173,7 @@ class Application(tkinter.Frame):
 
         self.SettingWindow = None
         self.CSVWindow = None
+        self.what_to_plot = None
         self.csv_output_ = None
 
         # Create each function
@@ -254,6 +292,7 @@ class Application(tkinter.Frame):
         self.button_refer_file.grid(row=1, column=10, sticky=tkinter.E)
         self.button_refer_dir.grid(row=1, column=10, sticky=tkinter.E)
         self.button_csv_output.grid(row=3, column=5, columnspan=2, pady=4)
+        self.button_what_to_plot.grid(row=4, column=5, columnspan=2, pady=4)
 
     def create_scrollbar(self):
         self.scrollbar_v2.grid(row=3, column=11, sticky=(tkinter.N, tkinter.S, tkinter.W))
@@ -537,7 +576,6 @@ class Application(tkinter.Frame):
 
                 txt_csv_output = tkinter.Text(frame_csv_output, wrap=tkinter.NONE)
                 txt_csv_output.insert('1.0', self.txt_csv.get())
-                # txt_csv_output.insert('1.0', "test")
                 txt_csv_output.grid(row=0, column=0, sticky=(tkinter.N, tkinter.E, tkinter.S, tkinter.W))
 
                 # Scrollbar
@@ -545,23 +583,265 @@ class Application(tkinter.Frame):
                     frame_csv_output,
                     orient=tkinter.VERTICAL,
                     command=txt_csv_output.yview)
-
                 scrollbar_2 = ttk.Scrollbar(frame_csv_output, command=txt_csv_output.xview, orient='h')
                 scrollbar.grid(row=0, column=1, sticky=(tkinter.N, tkinter.S))
                 scrollbar_2.grid(row=1, column=0, sticky=(tkinter.E, tkinter.W))
+
                 txt_csv_output['xscrollcommand'] = scrollbar_2.set
                 txt_csv_output['yscrollcommand'] = scrollbar.set
+            else:
+                self.CSVWindow.attributes('-topmost', True)
+                self.CSVWindow.attributes('-topmost', False)
+        except:
+            import traceback
+            traceback.print_exc()
+            self.status_var.set("Error occurred")
 
-                # txt_csv_output.insert(data)
+    def other_method_plot(self, fn):
+        self.ax1.cla()  # 前の描画データの消去
+        self.ax2.cla()
+        ls = ['MST', 'DMST', 'Actuator Cylinder', 'U2DiVA', 'Cactus', 'ARDEMA2D']
+        aoa_file = 'SIMcsv/AoA.csv'
+        norm_file = 'SIMcsv/NormalLoad.csv'
+        tan_file = 'SIMcsv/TanLoad.csv'
+        aoa_df = pd.read_csv(aoa_file)
+        norm_df = pd.read_csv(norm_file)
+        tan_df = pd.read_csv(tan_file)
+        df = [aoa_df, norm_df, tan_df]
+        # df_columns = list(df.columns)
 
+        ls_a = list(df[0].columns)
+        ls_n = list(df[1].columns)
+        ls_t = list(df[2].columns)
+        ls_name = [ls_a,ls_n,ls_t]
+        ls_2 = []
+        for i in range(len(ls)):
+            ls_2.append([self.AoA_list[i].get(),
+                         self.Norm_list[i].get(),
+                         self.Tan_list[i].get()])
+        for i in range(len(ls)):
+            for j in range(3):
+                if ls_2[i][j] == '1':
+                    print(ls_2[i][j])
+                    self.ax1.plot(df[j][ls_name[j][i * 2]],
+                                  df[j][ls_name[j][i * 2 + 1]],
+                                  label=ls[i])
+                    print('Draw',ls_name[j][i*2])
+                    self.ax2.plot(df[j][ls_name[j][i * 2]],
+                                  df[j][ls_name[j][i * 2 + 1]],
+                                  label=ls[i])
+        self.Canvas.draw()
+        self.Canvas2.draw()
 
+        # print(df)
+        print(ls_2)
+
+    def select_what_to_plot(self):
+        try:
+            if self.what_to_plot is None or not self.what_to_plot.winfo_exists():
+                self.what_to_plot = tkinter.Toplevel(self.master)
+                self.what_to_plot.title(u"What to Plot")
+                # self.what_to_plot.minsize(450, 450)
+                self.what_to_plot.rowconfigure(0, weight=1)
+                self.what_to_plot.columnconfigure(0, weight=1)
+                self.what_to_plot.grid()
+                ini_name = self.Entry_plot_data.get()
+
+                frame_what_to_plot = ttk.Frame(self.what_to_plot)
+                frame_what_to_plot.rowconfigure(0, weight=1)
+                frame_what_to_plot.columnconfigure(0, weight=1)
+                frame_what_to_plot.grid(sticky=(tkinter.N, tkinter.E, tkinter.S, tkinter.W))
+
+                '''
+                他シミュレーションのデータラベルなど
+                '''
+
+                ALL_Method = ttk.Label(frame_what_to_plot, text='ALL')
+                MST = ttk.Label(frame_what_to_plot, text='MST')
+                DMST = ttk.Label(frame_what_to_plot, text='DMST')
+                AC = ttk.Label(frame_what_to_plot, text='Actuator Cylinder')
+                U2DiVA = ttk.Label(frame_what_to_plot, text='U2DiVA')
+                Cactus = ttk.Label(frame_what_to_plot, text='Cactus')
+                ARDEMA2D = ttk.Label(frame_what_to_plot, text='ARDEMA2D')
+                AoA = ttk.Label(frame_what_to_plot, text='Angle of attack')
+                NormalLoad = ttk.Label(frame_what_to_plot, text='Normal Load')
+                TangentialLoad = ttk.Label(frame_what_to_plot, text='Tangential Load')
+
+                ALL_Method.grid(row=1, column=0, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
+                MST.grid(row=2, column=0, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
+                DMST.grid(row=3, column=0, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
+                AC.grid(row=4, column=0, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
+                U2DiVA.grid(row=5, column=0, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
+                Cactus.grid(row=6, column=0, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
+                ARDEMA2D.grid(row=7, column=0, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
+                AoA.grid(row=0, column=1, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
+                NormalLoad.grid(row=0, column=2, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
+                TangentialLoad.grid(row=0, column=3, sticky=(tkinter.E, tkinter.W, tkinter.S, tkinter.N))
+
+                def aoa_on():
+                    self.MST_A.set(self.ALL_A.get())
+                    self.DMST_A.set(self.ALL_A.get())
+                    self.AC_A.set(self.ALL_A.get())
+                    self.U2DiVA_A.set(self.ALL_A.get())
+                    self.Cactus_A.set(self.ALL_A.get())
+                    self.ARDEMA2D_A.set(self.ALL_A.get())
+
+                def norm_on():
+                    self.MST_N.set(self.ALL_N.get())
+                    self.DMST_N.set(self.ALL_N.get())
+                    self.AC_N.set(self.ALL_N.get())
+                    self.U2DiVA_N.set(self.ALL_N.get())
+                    self.Cactus_N.set(self.ALL_N.get())
+                    self.ARDEMA2D_N.set(self.ALL_N.get())
+
+                def tang_on():
+                    self.MST_T.set(self.ALL_T.get())
+                    self.DMST_T.set(self.ALL_T.get())
+                    self.AC_T.set(self.ALL_T.get())
+                    self.U2DiVA_T.set(self.ALL_T.get())
+                    self.Cactus_T.set(self.ALL_T.get())
+                    self.ARDEMA2D_T.set(self.ALL_T.get())
+
+                cALL_A = ttk.Checkbutton(frame_what_to_plot,
+                                         padding=5,
+                                         onvalue='1',
+                                         offvalue='0',
+                                         variable=self.ALL_A,
+                                         command=aoa_on)
+                cALL_N = ttk.Checkbutton(frame_what_to_plot,
+                                         padding=5,
+                                         onvalue='1',
+                                         offvalue='0',
+                                         variable=self.ALL_N,
+                                         command=norm_on)
+                cALL_T = ttk.Checkbutton(frame_what_to_plot,
+                                         padding=5,
+                                         onvalue='1',
+                                         offvalue='0',
+                                         variable=self.ALL_T,
+                                         command=tang_on)
+                cMST_A = ttk.Checkbutton(frame_what_to_plot,
+                                         padding=5,
+                                         onvalue='1',
+                                         offvalue='0',
+                                         variable=self.MST_A,
+                                         command=lambda: print(self.MST_A.get()))
+                cMST_N = ttk.Checkbutton(frame_what_to_plot,
+                                         padding=5,
+                                         onvalue='1',
+                                         offvalue='0',
+                                         variable=self.MST_N,
+                                         command=lambda: print(self.MST_N.get()))
+                cMST_T = ttk.Checkbutton(frame_what_to_plot,
+                                         padding=5,
+                                         onvalue='1',
+                                         offvalue='0',
+                                         variable=self.MST_T,
+                                         command=lambda: print(self.MST_T.get()))
+                cDMST_A = ttk.Checkbutton(frame_what_to_plot,
+                                          padding=5,
+                                          onvalue='1',
+                                          offvalue='0',
+                                          variable=self.DMST_A,
+                                          command=lambda: print(self.DMST_A.get()))
+                cDMST_N = ttk.Checkbutton(frame_what_to_plot,
+                                          padding=5,
+                                          onvalue='1',
+                                          offvalue='0',
+                                          variable=self.DMST_N,
+                                          command=lambda: print(self.DMST_N.get()))
+                cDMST_T = ttk.Checkbutton(frame_what_to_plot,
+                                          padding=5,
+                                          onvalue='1',
+                                          offvalue='0',
+                                          variable=self.DMST_T,
+                                          command=lambda: print(self.DMST_T.get()))
+                cAC_A = ttk.Checkbutton(frame_what_to_plot,
+                                        padding=5,
+                                        onvalue='1',
+                                        offvalue='0',
+                                        variable=self.AC_A,
+                                        command=lambda: print(self.AC_A.get()))
+                cAC_N = ttk.Checkbutton(frame_what_to_plot,
+                                        padding=5,
+                                        onvalue='1',
+                                        offvalue='0',
+                                        variable=self.AC_N,
+                                        command=lambda: print(self.AC_N.get()))
+                cAC_T = ttk.Checkbutton(frame_what_to_plot,
+                                        padding=5,
+                                        onvalue='1',
+                                        offvalue='0',
+                                        variable=self.AC_T,
+                                        command=lambda: print(self.AC_T.get()))
+                cU2DiVA_A = ttk.Checkbutton(frame_what_to_plot,
+                                            padding=5,
+                                            onvalue='1',
+                                            offvalue='0',
+                                            variable=self.U2DiVA_A,
+                                            command=lambda: print(self.U2DiVA_A.get()))
+                cU2DiVA_N = ttk.Checkbutton(frame_what_to_plot,
+                                            padding=5,
+                                            onvalue='1',
+                                            offvalue='0',
+                                            variable=self.U2DiVA_N,
+                                            command=lambda: print(self.U2DiVA_N.get()))
+                cU2DiVA_T = ttk.Checkbutton(frame_what_to_plot,
+                                            padding=5,
+                                            onvalue='1',
+                                            offvalue='0',
+                                            variable=self.U2DiVA_T,
+                                            command=lambda: print(self.U2DiVA_T.get()))
+                cCactus_A = ttk.Checkbutton(frame_what_to_plot,
+                                            padding=5,
+                                            onvalue='1',
+                                            offvalue='0',
+                                            variable=self.Cactus_A,
+                                            command=lambda: print(self.Cactus_A.get()))
+                cCactus_N = ttk.Checkbutton(frame_what_to_plot,
+                                            padding=5,
+                                            onvalue='1',
+                                            offvalue='0',
+                                            variable=self.Cactus_N,
+                                            command=lambda: print(self.Cactus_N.get()))
+                cCactus_T = ttk.Checkbutton(frame_what_to_plot,
+                                            padding=5,
+                                            onvalue='1',
+                                            offvalue='0',
+                                            variable=self.Cactus_T,
+                                            command=lambda: print(self.Cactus_T.get()))
+                cARDEMA2D_A = ttk.Checkbutton(frame_what_to_plot,
+                                              padding=5,
+                                              onvalue='1',
+                                              offvalue='0',
+                                              variable=self.ARDEMA2D_A,
+                                              command=lambda: print(self.ARDEMA2D_A.get()))
+                cARDEMA2D_N = ttk.Checkbutton(frame_what_to_plot,
+                                              padding=5,
+                                              onvalue='1',
+                                              offvalue='0',
+                                              variable=self.ARDEMA2D_N,
+                                              command=lambda: print(self.ARDEMA2D_N.get()))
+                cARDEMA2D_T = ttk.Checkbutton(frame_what_to_plot,
+                                              padding=5,
+                                              onvalue='1',
+                                              offvalue='0',
+                                              variable=self.ARDEMA2D_T,
+                                              command=self.other_method_plot('SIMcsv/AoA.csv'))
+                # Layout
+                cALL_A.grid(row=1, column=1), cALL_N.grid(row=1, column=2), cALL_T.grid(row=1, column=3)
+                cMST_A.grid(row=2, column=1), cMST_N.grid(row=2, column=2), cMST_T.grid(row=2, column=3)
+                cDMST_A.grid(row=3, column=1), cDMST_N.grid(row=3, column=2), cDMST_T.grid(row=3, column=3)
+                cAC_A.grid(row=4, column=1), cAC_N.grid(row=4, column=2), cAC_T.grid(row=4, column=3)
+                cU2DiVA_A.grid(row=5, column=1), cU2DiVA_N.grid(row=5, column=2), cU2DiVA_T.grid(row=5, column=3)
+                cCactus_A.grid(row=6, column=1), cCactus_N.grid(row=6, column=2), cCactus_T.grid(row=6, column=3)
+                cARDEMA2D_A.grid(row=7, column=1), cARDEMA2D_N.grid(row=7, column=2), cARDEMA2D_T.grid(row=7, column=3)
 
 
 
             else:
-                self.CSVWindow.attributes('-topmost', True)
-                self.CSVWindow.attributes('-topmost', False)
-
+                self.what_to_plot.attributes('-topmost', True)
+                self.what_to_plot.attributes('-topmost', False)
         except:
             import traceback
             traceback.print_exc()
