@@ -15,6 +15,7 @@ rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['Hiragino Sans', 'BIZ UDGothic', 'Yu Gothic', 'Meiryo', 'Noto Sans CJK JP',
                                'IPAexGothic', 'DejaVu Sans']
 
+# 倍率: 5.60E-05
 
 def main():
     root = tkinter.Tk()
