@@ -11,9 +11,26 @@ CONFIG_FILE_PATH = './config.ini'
 class ConfigInit:
     def __init__(self):
         config_ini = configparser.ConfigParser()
+        print("isExistConfig =", os.path.exists(CONFIG_FILE_PATH))
         if not os.path.exists(CONFIG_FILE_PATH):
-            exit(-1)
+            config_ini['CSVs'] = {
+                'Working Directory': os.getcwd()
+            }
+
+            config_ini['GraphSetting'] = {
+                'x min': 0,
+                'x max': 30,
+                'y min': -10,
+                'y max': 10,
+                'Plot cut-out': 5,
+                'Grid x': 30,
+                'Grid y': 10
+            }
+            with open('./config.ini', 'w') as file:
+                config_ini.write(file)
+            print("Generate \"Config.ini\"")
         config_ini.read(CONFIG_FILE_PATH, encoding='utf-8')
+        print("LOAD \"Config.ini\"")
         try:
             self.w_dir = str(config_ini['CSVs']['Working Directory'])
 
@@ -31,7 +48,6 @@ class ConfigInit:
 
 def main():
     Conf = ConfigInit()
-    print(Conf.x_min_c)
 
 
 if __name__ == '__main__':

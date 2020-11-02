@@ -359,7 +359,8 @@ class Application(tkinter.Frame):
                 if int((descartes_deg[i] + 270) % 360) == 355:
                     csv_listed.append([360,
                                        ",".join(list(map(str, df_out.iloc[18,  # 18 is index of "0 degree"
-                                                              self.low_cut.get():].tolist()))), str(_x_mean.tolist()[0])])
+                                                              self.low_cut.get():].tolist()))),
+                                       str(_x_mean.tolist()[0])])
             csv_listed = sorted(csv_listed, key=lambda s: s[0])
             for i in range(0, len(descartes_deg)):
                 csv_listed[i][0] = str(csv_listed[i][0])
@@ -608,20 +609,24 @@ class Application(tkinter.Frame):
         self.listbox_csv_list.delete(0, tkinter.END)
         for file in list(p.glob("*.csv")):
             self.listbox_csv_list.insert('end', file)
-        print(os.path.basename(list(p.glob("*.csv"))[0]))
+        # print(os.path.basename(list(p.glob("*.csv"))[0]))
 
     def save_config(self):
         import configparser
         config = configparser.ConfigParser()
         # config.read('./config.ini')
-        config['CSVs'] = {'Working Directory': self.dir_path.get()}
-        config['GraphSetting'] = {'x min': self.x_min.get(),
-                                  'x max': self.x_max.get(),
-                                  'y min': self.y_min.get(),
-                                  'y max': self.y_max.get(),
-                                  'Plot cut-out': self.low_cut.get(),
-                                  'Grid x': self.grid_interval_x.get(),
-                                  'Grid y': self.grid_interval_y.get()}
+        config['CSVs'] = {
+            'Working Directory': self.dir_path.get()
+        }
+        config['GraphSetting'] = {
+            'x min': self.x_min.get(),
+            'x max': self.x_max.get(),
+            'y min': self.y_min.get(),
+            'y max': self.y_max.get(),
+            'Plot cut-out': self.low_cut.get(),
+            'Grid x': self.grid_interval_x.get(),
+            'Grid y': self.grid_interval_y.get()
+        }
 
         with open('./config.ini', 'w') as f:
             config.write(f)
